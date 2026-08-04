@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Avanzado de Órdenes de Trabajo</title>
+    <link rel="manifest" href="manifest.json">
+      <style>
+:root {
+            --bg-color: #f1f5f9;
+            --container-bg: #e2e8f0;
+            --text-color: #1e293b;
+            --label-color: #475569;
+            --border-color: #cbd5e1;
+            --table-border: #cbd5e1;
+            --table-hover: #cbd5e120;
+            --table-even: #e9eff5;
+        }
+
+        /* Modo Oscuro más claro y luminoso */
+        body.dark-mode {
+            --bg-color: #334155 !important;
+            --container-bg: #475569 !important;
+            --text-color: #f8fafc !important;
+            --label-color: #e2e8f0 !important;
+            --border-color: #64748b !important;
+            --table-border: #64748b !important;
+            --table-hover: #ffffff10 !important;
+            --table-even: #3b485d !important;
+        }
+
+        }
+               }
+               }
+
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: var(--bg-color); color: var(--text-color); padding-bottom: 60px; transition: background 0.3s, color 0.3s; }
+        
+        /* Login Screen Overlay */
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 10000; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: var(--container-bg); padding: 30px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); max-width: 380px; width: 90%; text-align: center; color: var(--text-color); }
+        .login-card h3 { margin-top: 0; margin-bottom: 10px; color: #007bff; }
+        
+        /* Contenedor del Input de Contraseña */
+        .password-container { position: relative; width: 100%; margin: 15px 0; }
+        .password-container input { width: 100%; padding: 12px 40px 12px 12px; border: 2px solid var(--border-color); background-color: var(--container-bg); color: var(--text-color); border-radius: 6px; font-size: 16px; text-align: center; box-sizing: border-box; }
+        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; user-select: none; font-size: 18px; }
+
+        .login-card button { width: 100%; padding: 12px; background: #007bff; border: none; border-radius: 6px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .login-card button:hover { background: #0056b3; }
+
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        h2 { color: var(--text-color); margin-top: 0; }
+        
+        /* Dashboard KPI Cards Interactivos */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: var(--container-bg); padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); border-left: 5px solid #007bff; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; color: var(--text-color); }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .kpi-card.kpi-pendientes { border-left-color: #ffc107; }
+        .kpi-card.kpi-proceso { border-left-color: #17a2b8; }
+        .kpi-card.kpi-completadas { border-left-color: #28a745; }
+        .kpi-card.kpi-incidencias { border-left-color: #dc3545; }
+        .kpi-number { font-size: 24px; font-weight: bold; margin-top: 5px; color: var(--text-color); }
+        .kpi-label { font-size: 12px; text-transform: uppercase; color: var(--label-color); letter-spacing: 0.5px; }
+
+        .container { background-color: var(--container-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 20px; color: var(--text-color); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        label { font-weight: bold; margin-bottom: 5px; color: var(--label-color); font-size: 14px; }
+        input, select, textarea { padding: 8px; border: 1px solid var(--border-color); background-color: var(--container-bg); color: var(--text-color); border-radius: 4px; font-size: 14px; font-family: Arial, sans-serif; box-sizing: border-box; transition: border-color 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: #007bff; outline: none; }
+        textarea { resize: vertical; min-height: 80px; }
+        
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        button { color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        
+        .btn-add { background-color: #28a745; } .btn-add:hover { background-color: #218838; }
+        .btn-update { background-color: #ffc107; color: #212529; display: none; } .btn-update:hover { background-color: #e0a800; }
+        .btn-cancel { background-color: #6c757d; display: none; } .btn-cancel:hover { background-color: #5a6268; }
+        .btn-excel { background-color: #1f7246; } .btn-excel:hover { background-color: #175734; }
+        .btn-backup { background-color: #007bff; } .btn-backup:hover { background-color: #0056b3; }
+        .btn-restore { background-color: #17a2b8; } .btn-restore:hover { background-color: #117a8b; }
+        .btn-clear { background-color: #dc3545; } .btn-clear:hover { background-color: #bd2130; }
+        .btn-theme { background-color: #4e5058; color: #fff; padding: 8px 12px; font-size: 13px; }
+        .btn-logout { background-color: #6c757d; padding: 8px 12px; font-size: 13px; }
+        .btn-print { background-color: #17a2b8; margin-top: 15px; } .btn-print:hover { background-color: #138496; }
+        .btn-copy { background-color: #6f42c1; margin-top: 15px; margin-left: 5px; } .btn-copy:hover { background-color: #59359a; }
+        
+        .btn-action { padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-right: 4px; }
+        .btn-edit { background-color: #ffc107; color: #212529; } .btn-edit:hover { background-color: #e0a800; }
+        .btn-delete { background-color: #e3342f; } .btn-delete:hover { background-color: #cc1f1a; }
+        
+        /* Badges de Estado adaptados */
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; text-align: center; }
+        .badge-pendiente { background-color: #fef3c7; color: #92400e; }
+        .badge-proceso { background-color: #e0f2fe; color: #0369a1; }
+        .badge-completado { background-color: #dcfce7; color: #166534; }
+        .badge-incidencia { background-color: #fee2e2; color: #991b1b; }
+
+        /* Estilos de Resaltado por Estado en Filas adaptados */
+        tr.row-incidencia { background-color: rgba(220, 53, 69, 0.08) !important; }
+        tr.row-completado { background-color: rgba(40, 167, 69, 0.06) !important; }
+
+        .search-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
+        .search-box { width: 100%; padding: 12px; box-sizing: border-box; border: 2px solid #007bff; border-radius: 4px; font-size: 15px; background: var(--container-bg); color: var(--text-color); }
+        .search-count { font-size: 13px; color: var(--label-color); white-space: nowrap; font-weight: bold; }
+
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; border: 1px solid var(--table-border); border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; background-color: var(--container-bg); color: var(--text-color); }
+        th, td { border: 1px solid var(--table-border); padding: 12px; text-align: left; font-size: 14px; }
+        th { background-color: #007bff; color: white; }
+        th:first-child, td:first-child { min-width: 110px; }
+        tr:nth-child(even) { background-color: var(--table-even); }
+        tr:hover { background-color: var(--table-hover); cursor: pointer; }
+        .no-results { display: none; text-align: center; padding: 20px; color: var(--label-color); font-style: italic; background: var(--container-bg); border: 1px solid var(--table-border); margin-top: -1px; }
+        
+        .preview-text { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--label-color); font-style: italic; }
+        .img-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; }
+
+        /* Modal styling */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--container-bg); padding: 25px; border-radius: 8px; max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); position: relative; color: var(--text-color); }
+        .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--label-color); font-weight: bold; }
+        .modal-close:hover { color: var(--text-color); }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; border-bottom: 1px solid var(--table-border); padding-bottom: 15px; }
+        .modal-item { font-size: 14px; }
+        .modal-item strong { color: var(--label-color); display: block; margin-bottom: 3px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .modal-incidencia-box { margin-top: 15px; padding: 15px; background: rgba(255, 193, 7, 0.1); border-left: 5px solid #ffc107; border-radius: 4px; color: var(--text-color); }
+        .modal-incidencia-box strong { color: var(--text-color); display: block; margin-bottom: 5px; }
+        .modal-incidencia-text { white-space: pre-wrap; word-break: break-word; font-size: 15px; color: var(--text-color); line-height: 1.4; margin-bottom: 10px; }
+        .modal-img-full { max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 10px; }
+
+        /* Estilos de Impresión Corregidos para Guardar PDF */
+        @media print {
+            body {
+                background-color: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body * { 
+                visibility: hidden !important; 
+            }
+            #detalleModal, #detalleModal * { 
+                visibility: visible !important; 
+            }
+            #detalleModal { 
+                position: fixed !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                height: 100% !important;
+                background: white !important; 
+                display: flex !important;
+                justify-content: center !important;
+                align-items: flex-start !important;
+                z-index: 999999 !important;
+                overflow: visible !important;
+            }
+            .modal-content { 
+                box-shadow: none !important; 
+                max-width: 100% !important; 
+                width: 100% !important; 
+                max-height: none !important;
+                padding: 20px !important;
+                margin: 0 !important;
+                border: none !important;
+                color: black !important;
+                background: white !important;
+            }
+            .modal-close, .btn-print, .btn-copy { 
+                display: none !important; 
+            }
+        }
+
+        /* Notifications Toast */
+        #toastContainer { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 6px; color: white; font-weight: bold; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: fadeIn 0.3s, fadeOut 0.3s 2.7s forwards; }
+        .toast-success { background-color: #28a745; }
+        .toast-warning { background-color: #ffc107; color: #212529; }
+        .toast-error { background-color: #dc3545; }
+        .toast-info { background-color: #17a2b8; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de Login Modal -->
+    <div id="loginScreen" class="login-overlay">
+        <div class="login-card">
+            <h3>🔐 Control Órdenes de Trabajo</h3>
+            <p style="font-size: 13px; color: var(--label-color);">Por favor, introduce tu clave de acceso</p>
+            <div class="password-container">
+                <input type="password" id="loginPassword" placeholder="Contraseña..." onkeyup="evaluarEnterLogin(event)">
+                <span class="toggle-password" onclick="togglePasswordVisibility()">👁️</span>
+            </div>
+            <button onclick="validarAcceso()">Ingresar al Sistema</button>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <!-- Dashboard KPI Interactivo -->
+    <div class="kpi-grid">
+        <div class="kpi-card" onclick="filtrarPorKPI('')" title="Ver todos"><div class="kpi-label">Total Órdenes</div><div id="kpiTotal" class="kpi-number">0</div></div>
+        <div class="kpi-card kpi-pendientes" onclick="filtrarPorKPI('Pendiente')" title="Filtrar Pendientes"><div class="kpi-label">Pendientes</div><div id="kpiPendientes" class="kpi-number">0</div></div>
+        <div class="kpi-card kpi-proceso" onclick="filtrarPorKPI('En Proceso')" title="Filtrar En Proceso"><div class="kpi-label">En Proceso</div><div id="kpiProceso" class="kpi-number">0</div></div>
+        <div class="kpi-card kpi-completadas" onclick="filtrarPorKPI('Completado')" title="Filtrar Completadas"><div class="kpi-label">Completadas</div><div id="kpiCompletadas" class="kpi-number">0</div></div>
+        <div class="kpi-card kpi-incidencias" onclick="filtrarPorKPI('Incidencia')" title="Filtrar Incidencias"><div class="kpi-label">Incidencias</div><div id="kpiIncidencias" class="kpi-number">0</div></div>
+    </div>
+
+    <div class="container">
+        <div class="header-top">
+            <h2 id="formTitle" style="margin:0;">Registro de Orden de Trabajo</h2>
+            <div>
+                <button class="btn-theme" onclick="toggleTheme()">🌙 Modo Oscuro / Claro</button>
+                <button class="btn-logout" onclick="cerrarSesion()">🚪 Salir</button>
+            </div>
+        </div>
+        <form id="workForm">
+            <div class="form-grid">
+                <div class="form-group"><label for="fecha">Fecha Ejecución</label><input type="date" id="fecha" required></div>
+                <div class="form-group"><label for="orden">Orden de Trabajo</label><input type="text" id="orden" placeholder="Ej. OT-1234" required></div>
+                <div class="form-group">
+                    <label for="estado">Estado</label>
+                    <select id="estado">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Incidencia">Con Incidencia</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="operacion">Operación (Boleto)</label><input type="text" id="operacion" placeholder="Ej. OP-05"></div>
+                <div class="form-group"><label for="revision">Revisión</label><input type="text" id="revision" placeholder="Ej. Rev A"></div>
+                <div class="form-group"><label for="tipoPieza">Tipo de Pieza</label><input type="text" id="tipoPieza" placeholder="Ej. Eje central"></div>
+                <div class="form-group"><label for="trabajo">Trabajo a realizar</label><input type="text" id="trabajo" placeholder="Ej. Rectificado"></div>
+                <div class="form-group"><label for="notice">Notice</label><input type="text" id="notice" placeholder="Notas aclaratorias"></div>
+                <div class="form-group"><label for="responsable">Responsable de Notice</label><input type="text" id="responsable" placeholder="Nombre del supervisor"></div>
+                
+                <!-- Sección Foto con opción de eliminar -->
+                <div class="form-group">
+                    <label for="imagenIncidencia">📷 Adjuntar Foto / Evidencia</label>
+                    <input type="file" id="imagenIncidencia" accept="image/*">
+                    <div id="containerQuitarFoto" style="margin-top: 6px; display: none; font-size: 13px;">
+                        <label style="font-weight: normal; color: #dc3545; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="quitarFotoCheck"> Eliminar foto actual guardada
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group full-width"><label for="incidencia">Posible Incidencia (Detalle amplio)</label><textarea id="incidencia" placeholder="Escribe aquí toda la descripción de la incidencia..."></textarea></div>
+            </div>
+            <div class="actions">
+                <button type="button" id="btnAdd" class="btn-add" onclick="agregarFila()">Agregar Registro</button>
+                <button type="button" id="btnUpdate" class="btn-update" onclick="guardarEdicion()">Guardar Cambios</button>
+                <button type="button" id="btnCancel" class="btn-cancel" onclick="cancelarEdicion()">Cancelar</button>
+                <button type="button" class="btn-excel" onclick="exportarExcel()">Descargar Excel</button>
+                <button type="button" class="btn-backup" onclick="crearCopiaSeguridad()">💾 Crear Copia de Seguridad</button>
+                <button type="button" class="btn-restore" onclick="restaurarCopiaSeguridad()">📂 Restaurar Copia</button>
+                <button type="button" class="btn-clear" onclick="borrarTodo()">Borrar Todo</button>
+                <input type="file" id="inputRestoreFallback" style="display: none;" accept=".json" onchange="leerArchivoRestauracion(event)">
+            </div>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2>Buscador Rápido y Registros Guardados</h2>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-box" onkeyup="filtrarTabla()" placeholder="🔍 Escribe cualquier dato para buscar inmediatamente...">
+            <span id="searchCount" class="search-count"></span>
+        </div>
+        <div class="table-responsive">
+            <table id="tablaDatos">
+                <thead>
+                    <tr>
+                        <th>Fecha</th><th>Orden</th><th>Estado</th><th>Operación</th><th>Revisión</th><th>Tipo Pieza</th><th>Trabajo</th><th>Notice</th><th>Responsable</th><th>Foto</th><th>Incidencia</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaBody"></tbody>
+            </table>
+        </div>
+        <div id="noResults" class="no-results">No se encontraron registros.</div>
+    </div>
+
+    <!-- Modal de Detalles -->
+    <div id="detalleModal" class="modal-overlay" onclick="cerrarModalExterno(event)">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            <h2 style="border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 15px;" id="modalTitulo">Detalles del Registro</h2>
+            
+            <div class="modal-grid">
+                <div class="modal-item"><strong>Fecha Ejecución:</strong><span id="mFecha"></span></div>
+                <div class="modal-item"><strong>Estado:</strong><span id="mEstado"></span></div>
+                <div class="modal-item"><strong>Operación (Boleto):</strong><span id="mOperacion"></span></div>
+                <div class="modal-item"><strong>Revisión:</strong><span id="mRevision"></span></div>
+                <div class="modal-item"><strong>Tipo de Pieza:</strong><span id="mTipoPieza"></span></div>
+                <div class="modal-item"><strong>Trabajo Realizado:</strong><span id="mTrabajo"></span></div>
+                <div class="modal-item"><strong>Notice:</strong><span id="mNotice"></span></div>
+                <div class="modal-item"><strong>Responsable de Notice:</strong><span id="mResponsable"></span></div>
+            </div>
+            
+            <div class="modal-incidencia-box">
+                <strong>⚠️ Posible Incidencia (Detalle amplio completo):</strong>
+                <div id="mIncidencia" class="modal-incidencia-text"></div>
+                <div id="mFotoContainer"></div>
+            </div>
+
+            <button class="btn-print" onclick="guardarPDFInforme()">📄 Guardar Informe en PDF</button>
+            <button class="btn-copy" onclick="copiarDetallesModal()">📋 Copiar Resumen</button>
+        </div>
+    </div>
+
+    <script>
+        let editIndex = null;
+        let currentImageBase64 = ""; 
+        let activeRecordForCopy = null;
+
+        const CLAVE_CORRECTA = "2846"; 
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("sessionActive") === "true") {
+                document.getElementById("loginScreen").style.display = "none";
+            } else {
+                document.getElementById("loginPassword").focus();
+            }
+            
+            if (localStorage.getItem("themeMode") === "dark") {
+                document.body.classList.add("dark-mode");
+            }
+            
+            renderizarTabla(); 
+        });
+
+        function validarAcceso() {
+            let passInput = document.getElementById("loginPassword").value.trim();
+            if (passInput === CLAVE_CORRECTA) {
+                localStorage.setItem("sessionActive", "true");
+                document.getElementById("loginScreen").style.display = "none";
+                document.getElementById("loginPassword").value = "";
+                showToast("Acceso concedido", "success");
+            } else {
+                showToast("Contraseña incorrecta", "error");
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById("loginPassword");
+            passInput.type = passInput.type === "password" ? "text" : "password";
+        }
+
+        function evaluarEnterLogin(e) { if (e.key === 'Enter') validarAcceso(); }
+
+        function cerrarSesion() {
+            localStorage.removeItem("sessionActive");
+            document.getElementById("loginScreen").style.display = "flex";
+            document.getElementById("loginPassword").focus();
+            showToast("Sesión cerrada", "info");
+        }
+
+        function showToast(mensaje, tipo = "success") {
+            let container = document.getElementById("toastContainer");
+            let toast = document.createElement("div");
+            toast.className = `toast toast-${tipo}`;
+            toast.innerText = mensaje;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle("dark-mode");
+            let isDark = document.body.classList.contains("dark-mode");
+            localStorage.setItem("themeMode", isDark ? "dark" : "light");
+            showToast(`Modo ${isDark ? "Oscuro" : "Claro"} activado`, "info");
+        }
+
+        function actualizarKPIs(registros) {
+            document.getElementById("kpiTotal").innerText = registros.length;
+            document.getElementById("kpiPendientes").innerText = registros.filter(r => (r.estado || 'Pendiente') === 'Pendiente').length;
+            document.getElementById("kpiProceso").innerText = registros.filter(r => r.estado === 'En Proceso').length;
+            document.getElementById("kpiCompletadas").innerText = registros.filter(r => r.estado === 'Completado').length;
+            document.getElementById("kpiIncidencias").innerText = registros.filter(r => r.estado === 'Incidencia').length;
+        }
+
+        function filtrarPorKPI(estado) {
+            document.getElementById("searchInput").value = estado;
+            filtrarTabla();
+            showToast(estado ? `Filtrando por: ${estado}` : "Mostrando todos los registros", "info");
+        }
+
+        function formatearFechaEspanol(fechaInput) {
+            if (!fechaInput) return 'N/A';
+            let partes = fechaInput.split('-');
+            if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            return fechaInput;
+        }
+
+        function obtenerBadgeEstado(estado) {
+            estado = estado || 'Pendiente';
+            let clase = 'badge-pendiente';
+            if (estado === 'En Proceso') clase = 'badge-proceso';
+            if (estado === 'Completado') clase = 'badge-completado';
+            if (estado === 'Incidencia') clase = 'badge-incidencia';
+            return `<span class="badge ${clase}">${estado}</span>`;
+        }
+
+        async function agregarFila() {
+            let fecha = document.getElementById('fecha').value;
+            let orden = document.getElementById('orden').value;
+            let estado = document.getElementById('estado').value;
+            let operacion = document.getElementById('operacion').value;
+            let revision = document.getElementById('revision').value;
+            let tipoPieza = document.getElementById('tipoPieza').value;
+            let trabajo = document.getElementById('trabajo').value;
+            let incidencia = document.getElementById('incidencia').value;
+            let notice = document.getElementById('notice').value;
+            let responsable = document.getElementById('responsable').value;
+            let fileInput = document.getElementById('imagenIncidencia');
+
+            if (!fecha || !orden) { 
+                showToast("Por favor, introduce la Fecha y la Orden.", "warning"); 
+                return; 
+            }
+
+            let imagenBase64 = "";
+            if (fileInput.files.length > 0) {
+                imagenBase64 = await convertirBase64(fileInput.files[0]);
+            }
+
+            let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+            registros.push({ fecha, orden, estado, operacion, revision, tipoPieza, trabajo, incidencia, notice, responsable, imagen: imagenBase64 });
+            localStorage.setItem("registrosOT", JSON.stringify(registros));
+
+            renderizarTabla();
+            document.getElementById('workForm').reset();
+            document.getElementById('containerQuitarFoto').style.display = 'none';
+            showToast("Registro añadido correctamente", "success");
+        }
+
+        function convertirBase64(file) {
+            return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function cargarParaEditar(index, event) {
+            if (event) event.stopPropagation();
+            let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+            let reg = registros[index];
+            if (!reg) return;
+
+            editIndex = index;
+            currentImageBase64 = reg.imagen || "";
+
+            document.getElementById('fecha').value = reg.fecha || '';
+            document.getElementById('orden').value = reg.orden || '';
+            document.getElementById('estado').value = reg.estado || 'Pendiente';
+            document.getElementById('operacion').value = reg.operacion || '';
+            document.getElementById('revision').value = reg.revision || '';
+            document.getElementById('tipoPieza').value = reg.tipoPieza || '';
+            document.getElementById('trabajo').value = reg.trabajo || '';
+            document.getElementById('notice').value = reg.notice || '';
+            document.getElementById('responsable').value = reg.responsable || '';
+            document.getElementById('incidencia').value = reg.incidencia || '';
+
+            let containerQuitar = document.getElementById('containerQuitarFoto');
+            let checkQuitar = document.getElementById('quitarFotoCheck');
+            checkQuitar.checked = false;
+            if (reg.imagen) {
+                containerQuitar.style.display = 'block';
+            } else {
+                containerQuitar.style.display = 'none';
+            }
+
+            document.getElementById('formTitle').innerText = `Editando Orden: ${reg.orden}`;
+            document.getElementById('btnAdd').style.display = 'none';
+            document.getElementById('btnUpdate').style.display = 'inline-block';
+            document.getElementById('btnCancel').style.display = 'inline-block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function guardarEdicion() {
+            if (editIndex === null) return;
+
+            let fileInput = document.getElementById('imagenIncidencia');
+            let checkQuitar = document.getElementById('quitarFotoCheck');
+            let imagenBase64 = currentImageBase64;
+            
+            if (checkQuitar && checkQuitar.checked) {
+                imagenBase64 = ""; 
+            } else if (fileInput.files.length > 0) {
+                imagenBase64 = await convertirBase64(fileInput.files[0]);
+            }
+
+            let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+            registros[editIndex] = {
+                fecha: document.getElementById('fecha').value,
+                orden: document.getElementById('orden').value,
+                estado: document.getElementById('estado').value,
+                operacion: document.getElementById('operacion').value,
+                revision: document.getElementById('revision').value,
+                tipoPieza: document.getElementById('tipoPieza').value,
+                trabajo: document.getElementById('trabajo').value,
+                notice: document.getElementById('notice').value,
+                responsable: document.getElementById('responsable').value,
+                incidencia: document.getElementById('incidencia').value,
+                imagen: imagenBase64
+            };
+
+            localStorage.setItem("registrosOT", JSON.stringify(registros));
+            cancelarEdicion();
+            renderizarTabla();
+            showToast("Registro actualizado correctamente", "success");
+        }
+
+        function cancelarEdicion() {
+            editIndex = null;
+            currentImageBase64 = "";
+            document.getElementById('workForm').reset();
+            document.getElementById('containerQuitarFoto').style.display = 'none';
+            document.getElementById('formTitle').innerText = "Registro de Orden de Trabajo";
+            document.getElementById('btnAdd').style.display = 'inline-block';
+            document.getElementById('btnUpdate').style.display = 'none';
+            document.getElementById('btnCancel').style.display = 'none';
+        }
+
+        function renderizarTabla() {
+            let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+            let tbody = document.getElementById('tablaBody');
+            tbody.innerHTML = ""; 
+
+            actualizarKPIs(registros);
+
+            registros.forEach((reg, index) => {
+                let nuevaFila = tbody.insertRow();
+                nuevaFila.addEventListener('click', () => abrirModal(reg));
+
+                if (reg.estado === 'Incidencia') nuevaFila.classList.add('row-incidencia');
+                if (reg.estado === 'Completado') nuevaFila.classList.add('row-completado');
+
+                nuevaFila.insertCell(0).innerText = formatearFechaEspanol(reg.fecha);
+                nuevaFila.insertCell(1).innerText = reg.orden || '';
+                nuevaFila.insertCell(2).innerHTML = obtenerBadgeEstado(reg.estado);
+                nuevaFila.insertCell(3).innerText = reg.operacion || '';
+                nuevaFila.insertCell(4).innerText = reg.revision || '';
+                nuevaFila.insertCell(5).innerText = reg.tipoPieza || '';
+                nuevaFila.insertCell(6).innerText = reg.trabajo || '';
+                nuevaFila.insertCell(7).innerText = reg.notice || '';
+                nuevaFila.insertCell(8).innerText = reg.responsable || '';
+                
+                let celdaImg = nuevaFila.insertCell(9);
+                if (reg.imagen) {
+                    celdaImg.innerHTML = `<img src="${reg.imagen}" class="img-preview" alt="Foto">`;
+                } else {
+                    celdaImg.innerText = '-';
+                }
+
+                let celdaIncidencia = nuevaFila.insertCell(10);
+                celdaIncidencia.innerText = reg.incidencia || '';
+                celdaIncidencia.className = "preview-text";
+                
+                let accionCell = nuevaFila.insertCell(11);
+                accionCell.innerHTML = `
+                    <button class="btn-action btn-edit" onclick="cargarParaEditar(${index}, event)">Editar</button>
+                    <button class="btn-action btn-delete" onclick="eliminarFila(${index}, event)">Eliminar</button>
+                `;
+            });
+            filtrarTabla(); 
+        }
+
+        function abrirModal(registro) {
+            activeRecordForCopy = registro;
+            document.getElementById('modalTitulo').innerText = `Orden de Trabajo: ${registro.orden || 'Sin número'}`;
+            document.getElementById('mFecha').innerText = formatearFechaEspanol(registro.fecha);
+            document.getElementById('mEstado').innerHTML = obtenerBadgeEstado(registro.estado);
+            document.getElementById('mOperacion').innerText = registro.operacion || 'N/A';
+            document.getElementById('mRevision').innerText = registro.revision || 'N/A';
+            document.getElementById('mTipoPieza').innerText = registro.tipoPieza || 'N/A';
+            document.getElementById('mTrabajo').innerText = registro.trabajo || 'N/A';
+            document.getElementById('mNotice').innerText = registro.notice || 'N/A';
+            document.getElementById('mResponsable').innerText = registro.responsable || 'N/A';
+            document.getElementById('mIncidencia').innerText = registro.incidencia || 'No se detallaron incidencias en este registro.';
+            
+            let mFoto = document.getElementById('mFotoContainer');
+            if (registro.imagen) {
+                mFoto.innerHTML = `<img src="${registro.imagen}" class="modal-img-full" alt="Evidencia de Incidencia">`;
+            } else {
+                mFoto.innerHTML = '';
+            }
+
+            document.getElementById('detalleModal').style.display = 'flex';
+        }
+
+        function guardarPDFInforme() {
+            let modal = document.getElementById('detalleModal');
+            if (modal.style.display !== 'flex') {
+                showToast("No hay ningún informe abierto para guardar", "warning");
+                return;
+            }
+            window.print();
+        }
+
+        function copiarDetallesModal() {
+            if (!activeRecordForCopy) return;
+            let reg = activeRecordForCopy;
+            let texto = `📌 *ORDEN DE TRABAJO: ${reg.orden || 'N/A'}*\n` +
+                        `• Fecha: ${formatearFechaEspanol(reg.fecha)}\n` +
+                        `• Estado: ${reg.estado || 'Pendiente'}\n` +
+                        `• Operación: ${reg.operacion || 'N/A'}\n` +
+                        `• Revisión: ${reg.revision || 'N/A'}\n` +
+                        `• Tipo de Pieza: ${reg.tipoPieza || 'N/A'}\n` +
+                        `• Trabajo: ${reg.trabajo || 'N/A'}\n` +
+                        `• Notice: ${reg.notice || 'N/A'} (Resp: ${reg.responsable || 'N/A'})\n` +
+                        `• Incidencia: ${reg.incidencia || 'Sin incidencias'}`;
+            
+            navigator.clipboard.writeText(texto).then(() => {
+                showToast("Resumen copiado al portapapeles", "success");
+            }).catch(() => {
+                showToast("Error al copiar texto", "error");
+            });
+        }
+
+        function cerrarModal() { document.getElementById('detalleModal').style.display = 'none'; }
+        function cerrarModalExterno(event) { if (event.target.id === 'detalleModal') cerrarModal(); }
+
+        function eliminarFila(index, event) {
+            if (event) event.stopPropagation();
+            if (confirm("¿Estás seguro de que deseas eliminar este registro?")) {
+                let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+                registros.splice(index, 1);
+                localStorage.setItem("registrosOT", JSON.stringify(registros));
+                renderizarTabla();
+                showToast("Registro eliminado", "info");
+            }
+        }
+
+        function filtrarTabla() {
+            let input = document.getElementById("searchInput");
+            let filter = input.value.toLowerCase();
+            let tbody = document.getElementById("tablaBody");
+            let rows = tbody.getElementsByTagName("tr");
+            let visibleRows = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                let cells = rows[i].getElementsByTagName("td");
+                let match = false;
+                for (let j = 0; j < cells.length - 1; j++) { 
+                    if (cells[j] && cells[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (match) {
+                    rows[i].style.display = "";
+                    visibleRows++;
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+
+            document.getElementById("searchCount").innerText = rows.length > 0 ? `Mostrando ${visibleRows} de ${rows.length}` : '';
+            document.getElementById("noResults").style.display = (visibleRows === 0 && rows.length > 0) ? "block" : "none";
+        }
+
+        function exportarExcel() {
+            let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+            if (registros.length === 0) { showToast("No hay datos para exportar", "warning"); return; }
+
+            let csvContent = "\uFEFFFecha;Orden;Estado;Operación;Revisión;Tipo Pieza;Trabajo;Notice;Responsable;Incidencia\n";
+            registros.forEach(reg => {
+                let fila = [
+                    formatearFechaEspanol(reg.fecha), reg.orden, reg.estado || 'Pendiente', reg.operacion, reg.revision, 
+                    reg.tipoPieza, reg.trabajo, reg.notice, reg.responsable, reg.incidencia
+                ].map(text => `"${(text || '').replace(/"/g, '""')}"`); 
+                csvContent += fila.join(";") + "\n";
+            });
+
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Ordenes_de_Trabajo.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Archivo CSV descargado", "success");
+        }
+
+        async function crearCopiaSeguridad() {
+            let registros = JSON.parse(localStorage.getItem("registrosOT")) || [];
+            if (registros.length === 0) { showToast("No hay registros para guardar copia", "warning"); return; }
+
+            let jsonString = JSON.stringify(registros, null, 2);
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'Copia_Principal_OT.json',
+                        types: [{ description: 'Archivo JSON', accept: { 'application/json': ['.json'] } }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+                    showToast("Copia de seguridad guardada", "success");
+                    return;
+                } catch (err) { if (err.name === 'AbortError') return; }
+            }
+
+            let blob = new Blob([jsonString], { type: "application/json" });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement("a");
+            link.href = url;
+            link.download = "Copia_Principal_OT.json";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast("Copia descargada", "success");
+        }
+
+        async function restaurarCopiaSeguridad() {
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({
+                        types: [{ description: 'Archivo JSON', accept: { 'application/json': ['.json'] } }],
+                        multiple: false
+                    });
+                    const file = await handle.getFile();
+                    const contenido = await file.text();
+                    procesarDatosRestaurados(contenido);
+                    return;
+                } catch (err) { if (err.name === 'AbortError') return; }
+            }
+            document.getElementById('inputRestoreFallback').click();
+        }
+
+        function leerArchivoRestauracion(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) { procesarDatosRestaurados(e.target.result); };
+            reader.readAsText(file);
+            event.target.value = "";
+        }
+
+        function procesarDatosRestaurados(textoJson) {
+            try {
+                let datosImportados = JSON.parse(textoJson);
+                if (!Array.isArray(datosImportados)) { showToast("Archivo JSON no válido", "error"); return; }
+
+                let registrosActuales = JSON.parse(localStorage.getItem("registrosOT")) || [];
+                if (registrosActuales.length > 0) {
+                    let opcion = confirm("¿Quieres SOBREESCRIBIR los datos? [Aceptar] = Reemplazar / [Cancelar] = Fusionar");
+                    localStorage.setItem("registrosOT", JSON.stringify(opcion ? datosImportados : registrosActuales.concat(datosImportados)));
+                } else {
+                    localStorage.setItem("registrosOT", JSON.stringify(datosImportados));
+                }
+
+                renderizarTabla();
+                showToast("Datos restaurados correctamente", "success");
+            } catch (err) {
+                showToast("Error al procesar el archivo JSON", "error");
+            }
+        }
+
+        function borrarTodo() {
+            if (confirm("¿AVISO CRÍTICO: Estás seguro de borrar TODOS los registros?")) {
+                localStorage.removeItem("registrosOT");
+                renderizarTabla();
+                showToast("Todos los registros han sido borrados", "info");
+            }
+        }
+    </script>
+</body>
+</html>
